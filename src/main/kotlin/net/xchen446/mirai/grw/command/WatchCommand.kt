@@ -3,6 +3,7 @@ package net.xchen446.mirai.grw.command
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.UserCommandSender
+import net.mamoe.mirai.contact.Group
 import net.xchen446.mirai.grw.GrwPlugin
 import net.xchen446.mirai.grw.config.GrwWatches
 import net.xchen446.mirai.grw.config.WatchEntry
@@ -27,10 +28,13 @@ object WatchCommand : CompositeCommand(
         }
         var ok = 0
         var fail = 0
+        val isGroup = subject is Group
         for (arg in repos) {
             runCatching { RepoId.parse(arg) }
                 .onSuccess { repo ->
-                    GrwWatches.watches.getOrPut(repo) { WatchEntry() }.subscribers += subject.id
+                    val entry = GrwWatches.watches.getOrPut(repo) { WatchEntry() }
+                    if (isGroup) entry.groupSubscribers += subject.id
+                    else entry.userSubscribers += subject.id
                     ok++
                 }
                 .onFailure { fail++ }
@@ -46,12 +50,15 @@ object WatchCommand : CompositeCommand(
         }
         var ok = 0
         var fail = 0
+        val isGroup = subject is Group
         for (arg in repos) {
             runCatching { RepoId.parse(arg) }
                 .onSuccess { repo ->
                     val entry = GrwWatches.watches[repo] ?: return@onSuccess
-                    entry.subscribers -= subject.id
-                    if (entry.subscribers.isEmpty()) GrwWatches.watches.remove(repo)
+                    if (isGroup) entry.groupSubscribers -= subject.id
+                    else entry.userSubscribers -= subject.id
+                    if (entry.userSubscribers.isEmpty() && entry.groupSubscribers.isEmpty())
+                        GrwWatches.watches.remove(repo)
                     ok++
                 }
                 .onFailure { fail++ }
@@ -69,7 +76,11 @@ object WatchCommand : CompositeCommand(
         val text = buildString {
             appendLine("当前监听 ${watches.size} 个仓库：")
             watches.entries.forEachIndexed { i, (repo, entry) ->
-                appendLine("${i + 1}. $repo  订阅 ${entry.subscribers.size} 人  最近 Tag: ${entry.lastTag ?: "（待首次轮询）"}")
+                val desc = buildList {
+                    if (entry.userSubscribers.isNotEmpty()) add("${entry.userSubscribers.size}人")
+                    if (entry.groupSubscribers.isNotEmpty()) add("${entry.groupSubscribers.size}群")
+                }.ifEmpty { listOf("无订阅") }.joinToString("/")
+                appendLine("${i + 1}. $repo  订阅 $desc  最近 Tag: ${entry.lastTag ?: "（待首次轮询）"}")
             }
         }.trim()
         sendMessage(text)

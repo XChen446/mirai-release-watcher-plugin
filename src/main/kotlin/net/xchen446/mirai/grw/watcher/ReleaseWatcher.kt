@@ -103,7 +103,7 @@ class ReleaseWatcher(
         // 始终更新基线，避免下次重复处理；预发布被过滤时也不应再次触发
         entry.lastTag = release.tagName
         if (shouldPush) {
-            toNotify += repo to Notification(release, entry.subscribers.toSet())
+            toNotify += repo to Notification(release, entry.userSubscribers + entry.groupSubscribers)
         }
     }
 
