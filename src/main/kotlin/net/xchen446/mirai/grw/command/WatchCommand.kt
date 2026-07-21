@@ -32,9 +32,11 @@ object WatchCommand : CompositeCommand(
         for (arg in repos) {
             runCatching { RepoId.parse(arg) }
                 .onSuccess { repo ->
-                    val entry = GrwWatches.watches.getOrPut(repo) { WatchEntry() }
+                    val watches = GrwWatches.watches
+                    val entry = watches.getOrPut(repo) { WatchEntry() }
                     if (isGroup) entry.groupSubscribers += subject.id
                     else entry.userSubscribers += subject.id
+                    watches[repo] = entry
                     ok++
                 }
                 .onFailure { fail++ }
@@ -54,11 +56,14 @@ object WatchCommand : CompositeCommand(
         for (arg in repos) {
             runCatching { RepoId.parse(arg) }
                 .onSuccess { repo ->
-                    val entry = GrwWatches.watches[repo] ?: return@onSuccess
+                    val watches = GrwWatches.watches
+                    val entry = watches[repo] ?: return@onSuccess
                     if (isGroup) entry.groupSubscribers -= subject.id
                     else entry.userSubscribers -= subject.id
                     if (entry.userSubscribers.isEmpty() && entry.groupSubscribers.isEmpty())
-                        GrwWatches.watches.remove(repo)
+                        watches.remove(repo)
+                    else
+                        watches[repo] = entry
                     ok++
                 }
                 .onFailure { fail++ }
