@@ -58,7 +58,7 @@ class GitHubClient(
         client.post(ENDPOINT) {
             contentType(ContentType.Application.Json)
             setBody(GraphQLRequest("{ viewer { login } }"))
-        }.status.isSuccess()
+        }.status.value in 200..299
     }.getOrDefault(false)
 
     override fun close() = client.close()
