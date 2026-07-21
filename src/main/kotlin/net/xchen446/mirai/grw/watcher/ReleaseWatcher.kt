@@ -60,6 +60,7 @@ class ReleaseWatcher(
         val release: Release,
         val subscribers: Set<Long>,
         val prevTag: String,
+        val avatarUrl: String?,
     )
 
     private suspend fun tick() {
@@ -95,7 +96,7 @@ class ReleaseWatcher(
                 val isNewRelease = release.tagName != prevTag && prevTag != null
                 val shouldPush = isNewRelease && (!release.isPrerelease || settings.includePrerelease)
                 if (shouldPush) {
-                    pending += PendingRelease(repo, release, entry.userSubscribers + entry.groupSubscribers, prevTag!!)
+                    pending += PendingRelease(repo, release, entry.userSubscribers + entry.groupSubscribers, prevTag!!, node.owner?.avatarUrl)
                 }
             }
         }
@@ -112,8 +113,8 @@ class ReleaseWatcher(
                 .getOrDefault(emptyMap())
         } else emptyMap()
 
-        val toNotify = pending.map { (repo, release, subscribers) ->
-            repo to Notification(release, subscribers, contributorsMap[repo] ?: emptySet())
+        val toNotify = pending.map { (repo, release, subscribers, _, avatarUrl) ->
+            repo to Notification(release, subscribers, contributorsMap[repo] ?: emptySet(), avatarUrl)
         }
 
         notifier.notify(toNotify)

@@ -3,15 +3,21 @@ package net.xchen446.mirai.grw.notifier
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.console.util.ContactUtils.getContactOrNull
+import net.mamoe.mirai.message.data.MessageChain
+import net.mamoe.mirai.message.data.MessageChainBuilder
+import net.mamoe.mirai.message.data.PlainText
+import net.mamoe.mirai.utils.MiraiExperimentalApi
 import net.mamoe.mirai.utils.MiraiLogger
 import net.xchen446.mirai.grw.config.GrwSettings
 import net.xchen446.mirai.grw.github.Release
 import net.xchen446.mirai.grw.github.RepoId
+import java.net.URL
 
 data class Notification(
     val release: Release,
     val subscribers: Set<Long>,
     val contributors: Set<String> = emptySet(),
+    val avatarUrl: String? = null,
 )
 
 /**
@@ -23,7 +29,7 @@ class Notifier(
     private val settings: GrwSettings,
     private val logger: MiraiLogger,
 ) {
-    @OptIn(ConsoleExperimentalApi::class)
+    @OptIn(ConsoleExperimentalApi::class, MiraiExperimentalApi::class)
     suspend fun notify(messages: List<Pair<RepoId, Notification>>) {
         if (messages.isEmpty()) return
         val botId = settings.botId
@@ -38,10 +44,27 @@ class Notifier(
         }
         messages.forEach { (repo, n) ->
             val text = formatMessage(repo, n)
+            val avatarBytes = runCatching {
+                n.avatarUrl?.let { URL(it).openStream().readBytes() }
+            }.getOrNull()
             n.subscribers.forEach { sub ->
                 logger.verbose("Sending notification for $repo to $sub")
-                bot.getContactOrNull(sub)?.sendMessage(text)
-                    ?: logger.warning("Contact $sub 为空，无法推送 $repo 的通知")
+                val contact = bot.getContactOrNull(sub)
+                if (contact == null) {
+                    logger.warning("Contact $sub 为空，无法推送 $repo 的通知")
+                    return@forEach
+                }
+                val msg = if (avatarBytes != null) {
+                    runCatching {
+                        val image = contact.uploadImage(avatarBytes.inputStream())
+                        MessageChainBuilder().apply {
+                            add(image)
+                            add(PlainText("\n"))
+                            add(PlainText(text))
+                        }.build()
+                    }.getOrNull()
+                } else null
+                contact.sendMessage(msg ?: text)
             }
         }
     }
@@ -57,6 +80,10 @@ class Notifier(
         appendLine("更新时间: ${r.updatedAt}")
         if (n.contributors.isNotEmpty()) {
             appendLine("贡献者: ${n.contributors.joinToString(", ")}（共 ${n.contributors.size} 人）")
+        }
+        r.description?.let { desc ->
+            val truncated = if (desc.length > 200) desc.take(200) + "…" else desc
+            appendLine("更新说明: $truncated")
         }
         val assets = r.releaseAssets.nodes
         if (assets.isEmpty()) {
