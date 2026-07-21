@@ -67,12 +67,13 @@ object WatchCommand : CompositeCommand(
     }
 
     @SubCommand
-    suspend fun CommandSender.list() {
+    suspend fun CommandSender.list(verbose: String? = null) {
         val watches = GrwWatches.watches
         if (watches.isEmpty()) {
             sendMessage("当前没有监听的仓库")
             return
         }
+        val isVerbose = verbose == "-v" || verbose == "--verbose"
         val text = buildString {
             appendLine("当前监听 ${watches.size} 个仓库：")
             watches.entries.forEachIndexed { i, (repo, entry) ->
@@ -81,6 +82,12 @@ object WatchCommand : CompositeCommand(
                     if (entry.groupSubscribers.isNotEmpty()) add("${entry.groupSubscribers.size}群")
                 }.ifEmpty { listOf("无订阅") }.joinToString("/")
                 appendLine("${i + 1}. $repo  订阅 $desc  最近 Tag: ${entry.lastTag ?: "（待首次轮询）"}")
+                if (isVerbose) {
+                    if (entry.userSubscribers.isNotEmpty())
+                        appendLine("     人: ${entry.userSubscribers.joinToString(", ")}")
+                    if (entry.groupSubscribers.isNotEmpty())
+                        appendLine("     群: ${entry.groupSubscribers.joinToString(", ")}")
+                }
             }
         }.trim()
         sendMessage(text)
