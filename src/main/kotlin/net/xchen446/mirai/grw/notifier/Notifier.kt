@@ -63,7 +63,9 @@ class Notifier(
                 appendLine("--------------------")
                 appendLine("  文件名: ${a.name}")
                 appendLine("  大小: ${a.sizeString}")
-                appendLine("  下载链接: ${a.downloadUrl}")
+                val url = if (settings.urlPrefix.isEmpty()) a.downloadUrl
+                          else "${settings.urlPrefix}${a.downloadUrl}"
+                appendLine("  下载链接: $url")
             }
         }
     }.trim()

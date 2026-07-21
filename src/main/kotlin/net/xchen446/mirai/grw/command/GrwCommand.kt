@@ -89,6 +89,13 @@ object GrwCommand : CompositeCommand(
         sendMessage("预发布版本推送已${if (enabled) "开启" else "关闭"}")
     }
 
+    @SubCommand("set", "prefix")
+    suspend fun CommandSender.setPrefix(prefix: String) {
+        GrwSettings.urlPrefix = prefix
+        val msg = if (prefix.isEmpty()) "已清除下载加速前缀" else "下载加速前缀已设为 $prefix"
+        sendMessage(msg)
+    }
+
     /**
      * 校验当前发送者是否拥有敏感操作权限 `net.xchen446.mirai.grw:admin`。
      * 未通过则发送提示并返回 false。控制台始终通过（root）。

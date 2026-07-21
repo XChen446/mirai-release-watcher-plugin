@@ -10,4 +10,5 @@ object GrwSettings : AutoSavePluginConfig("settings") {
     var interval: Long by value(30 * 1000L)
     var timeout: Long by value(15 * 1000L)
     var includePrerelease: Boolean by value(true)
+    var urlPrefix: String by value("")
 }
