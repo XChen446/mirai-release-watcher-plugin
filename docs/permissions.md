@@ -11,7 +11,24 @@
 
 普通用户默认**不拥有**上述权限，需管理员通过 `/permission permit <权限ID> <目标>` 显式授权。
 
-> 当前版本 `/grw` 下所有子命令（`enable` / `disable` / `set bot` / `set token` 等）共享同一个 `command.grw` 权限，粒度较粗。后续版本将为敏感子命令拆分为独立权限节点。
+## 敏感操作权限
+
+`/grw` 内部进一步区分了普通与敏感操作。敏感子命令除了 `command.grw`，还另需 **`net.xchen446.mirai.grw:admin`** 权限：
+
+| 子命令 | 需要权限 | 说明 |
+|--------|---------|------|
+| `/grw enable` / `/grw disable` | `command.grw` | 启停轮询 |
+| `/grw set interval ...` | `command.grw` | 调整轮询间隔 |
+| `/grw set timeout ...` | `command.grw` | 调整 HTTP 超时 |
+| `/grw set prerelease ...` | `command.grw` | 开关预发布推送 |
+| `/grw set bot ...` | `command.grw` + `admin` | 修改发送机器人（敏感） |
+| `/grw set token ...` | `command.grw` + `admin` | 修改 GitHub Token（敏感） |
+
+> 控制台默认拥有 root 权限，全部子命令均可执行。
+
+授权建议：
+- 普通管理员：仅授予 `command.grw` → 可启停、调参，但不能换 Token / Bot
+- 信任运维：授予 `command.grw` + `admin` → 全功能
 
 ---
 

@@ -4,15 +4,17 @@
 
 ## /grw —— 全局管理命令
 
+> 权限模型与推荐的细粒度控制方案见 [permissions.md](permissions.md)。
+
 | 子命令 | 权限 | 说明 |
 |--------|------|------|
-| `enable` | 控制台 | 启用轮询循环 |
-| `disable` | 控制台 | 停用轮询循环 |
-| `set bot <id>` | 控制台 | 设置发送通知消息的机器人 QQ 号 |
-| `set token <token>` | 控制台 | 设置并验证 GitHub Token（支持 Classic/Fine-grained/Scope 三类） |
-| `set interval <ms>` | 控制台 | 设置轮询间隔，需 > 0 |
-| `set timeout <ms>` | 控制台 | 设置 HTTP 请求超时，需 > 0 |
-| `set prerelease <true\|false>` | 控制台 | 是否推送预发布版本（默认 true） |
+| `enable` | `command.grw` | 启用轮询循环 |
+| `disable` | `command.grw` | 停用轮询循环 |
+| `set bot <id>` | `command.grw` + `admin` | 设置发送通知消息的机器人 QQ 号 |
+| `set token <token>` | `command.grw` + `admin` | 设置并验证 GitHub Token（支持 Classic/Fine-grained/Scope 三类） |
+| `set interval <ms>` | `command.grw` | 设置轮询间隔，需 > 0 |
+| `set timeout <ms>` | `command.grw` | 设置 HTTP 请求超时，需 > 0 |
+| `set prerelease <true\|false>` | `command.grw` | 是否推送预发布版本（默认 true） |
 
 ### 用法示例
 
