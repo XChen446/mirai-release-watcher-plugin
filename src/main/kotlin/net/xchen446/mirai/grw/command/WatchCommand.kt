@@ -81,7 +81,7 @@ object WatchCommand : CompositeCommand(
                     if (entry.userSubscribers.isNotEmpty()) add("${entry.userSubscribers.size}人")
                     if (entry.groupSubscribers.isNotEmpty()) add("${entry.groupSubscribers.size}群")
                 }.ifEmpty { listOf("无订阅") }.joinToString("/")
-                appendLine("${i + 1}. $repo  订阅 $desc  最近 Tag: ${entry.lastTag ?: "（待首次轮询）"}")
+                appendLine("${i + 1}. $repo  订阅 $desc  最近 Release: ${entry.lastReleaseTag ?: "（待首次轮询）"}")
                 if (isVerbose) {
                     if (entry.userSubscribers.isNotEmpty())
                         appendLine("     人: ${entry.userSubscribers.joinToString(", ")}")

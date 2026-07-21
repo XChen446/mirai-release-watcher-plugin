@@ -49,7 +49,7 @@ class Notifier(
         appendLine("【$repo】发现新版本！")
         appendLine("URL: ${r.url}")
         r.name?.let { appendLine("名称: $it") }
-        appendLine("Tag: ${r.tagName}")
+        appendLine("版本: ${r.tagName}")
         if (r.isPrerelease) appendLine("（预发布版本）")
         appendLine("发布时间: ${r.createdAt}")
         appendLine("更新时间: ${r.updatedAt}")

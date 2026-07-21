@@ -20,12 +20,12 @@ import net.xchen446.mirai.grw.notifier.Notifier
  * Release 轮询调度器。
  *
  * 按 [GrwSettings.interval] 周期性向 GitHub 发起批量 GraphQL 查询，
- * 对比每个仓库的 [WatchEntry.lastTag] 基线判定新版本，再交由 [Notifier] 推送。
+ * 对比每个仓库的 [WatchEntry.lastReleaseTag] 基线判定新版本，再交由 [Notifier] 推送。
  *
  * - 单次请求按 [BATCH_SIZE] 分批，规避 GitHub GraphQL 单查询复杂度限制
  * - 不存在的仓库自动从监听列表移除并告警
  * - 预发布按 [GrwSettings.includePrerelease] 过滤，但无论是否推送都会更新基线
- * - 首次记录到基线时不推送（避免历史 Release 轰炸），由 lastTag 初始为 null 保证
+ * - 首次记录到基线时不推送（避免历史 Release 轰炸），由 lastReleaseTag 初始为 null 保证
  */
 class ReleaseWatcher(
     private val client: GitHubClient,
@@ -98,10 +98,10 @@ class ReleaseWatcher(
         entry: WatchEntry,
         toNotify: MutableList<Pair<RepoId, Notification>>,
     ) {
-        val isNewTag = release.tagName != entry.lastTag && entry.lastTag != null
-        val shouldPush = isNewTag && (!release.isPrerelease || settings.includePrerelease)
+        val isNewRelease = release.tagName != entry.lastReleaseTag && entry.lastReleaseTag != null
+        val shouldPush = isNewRelease && (!release.isPrerelease || settings.includePrerelease)
         // 始终更新基线，避免下次重复处理；预发布被过滤时也不应再次触发
-        entry.lastTag = release.tagName
+        entry.lastReleaseTag = release.tagName
         if (shouldPush) {
             toNotify += repo to Notification(release, entry.userSubscribers + entry.groupSubscribers)
         }
