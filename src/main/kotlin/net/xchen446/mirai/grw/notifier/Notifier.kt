@@ -11,6 +11,7 @@ import net.xchen446.mirai.grw.github.RepoId
 data class Notification(
     val release: Release,
     val subscribers: Set<Long>,
+    val contributors: Set<String> = emptySet(),
 )
 
 /**
@@ -36,7 +37,7 @@ class Notifier(
             return
         }
         messages.forEach { (repo, n) ->
-            val text = formatMessage(repo, n.release)
+            val text = formatMessage(repo, n)
             n.subscribers.forEach { sub ->
                 logger.verbose("Sending notification for $repo to $sub")
                 bot.getContactOrNull(sub)?.sendMessage(text)
@@ -45,7 +46,8 @@ class Notifier(
         }
     }
 
-    private fun formatMessage(repo: RepoId, r: Release): String = buildString {
+    private fun formatMessage(repo: RepoId, n: Notification): String = buildString {
+        val r = n.release
         appendLine("【$repo】发现新版本！")
         appendLine("URL: ${r.url}")
         r.name?.let { appendLine("名称: $it") }
@@ -53,7 +55,9 @@ class Notifier(
         if (r.isPrerelease) appendLine("（预发布版本）")
         appendLine("发布时间: ${r.createdAt}")
         appendLine("更新时间: ${r.updatedAt}")
-        r.author?.let { appendLine("作者: $it") }
+        if (n.contributors.isNotEmpty()) {
+            appendLine("贡献者: ${n.contributors.joinToString(", ")}（共 ${n.contributors.size} 人）")
+        }
         val assets = r.releaseAssets.nodes
         if (assets.isEmpty()) {
             append("本次发布未附带资源文件")

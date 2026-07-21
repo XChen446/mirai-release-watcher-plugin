@@ -56,6 +56,17 @@ class GitHubClient(
             setBody(GraphQLRequest(GraphQLQuery.build(repos)))
         }.body()
 
+    suspend fun fetchContributors(requests: List<ContributorsRequest>): Map<RepoId, Set<String>> =
+        runCatching {
+            val resp: ContributorsResponse = client.post(ENDPOINT) {
+                contentType(ContentType.Application.Json)
+                setBody(GraphQLRequest(GraphQLQuery.buildContributorsQuery(requests)))
+            }.body()
+            requests.associate { req ->
+                req.repo to extractContributors(resp, req.repo.toLegalId())
+            }
+        }.getOrDefault(emptyMap())
+
     suspend fun verifyToken(): Boolean = runCatching {
         client.post(ENDPOINT) {
             contentType(ContentType.Application.Json)

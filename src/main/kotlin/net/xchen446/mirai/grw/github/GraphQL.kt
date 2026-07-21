@@ -41,6 +41,68 @@ data class ReleaseNodes(
 )
 
 /**
+ * 两个 Release 之间的贡献者请求。
+ */
+data class ContributorsRequest(
+    val repo: RepoId,
+    val headTag: String,
+    val baseTag: String,
+)
+
+@Serializable
+data class ContributorsResponse(
+    val data: Map<String, ContributorsRepo?>? = null,
+)
+
+@Serializable
+data class ContributorsRepo(
+    val compare: ContributorsCompare? = null,
+)
+
+@Serializable
+data class ContributorsCompare(
+    val commits: ContributorsCommits = ContributorsCommits(),
+)
+
+@Serializable
+data class ContributorsCommits(
+    val nodes: List<ContributorsCommitEdge> = emptyList(),
+)
+
+@Serializable
+data class ContributorsCommitEdge(
+    val commit: ContributorsCommitData,
+)
+
+@Serializable
+data class ContributorsCommitData(
+    val author: ContributorsAuthor? = null,
+)
+
+@Serializable
+data class ContributorsAuthor(
+    val user: ContributorsUser? = null,
+)
+
+@Serializable
+data class ContributorsUser(
+    val login: String,
+    val name: String? = null,
+)
+
+/**
+ * 从 [ContributorsResponse] 中提取指定别名的贡献者 login 集合。
+ */
+fun extractContributors(response: ContributorsResponse, alias: String): Set<String> =
+    response.data?.get(alias)
+        ?.compare
+        ?.commits
+        ?.nodes
+        ?.mapNotNull { it.commit.author?.user?.login }
+        ?.toSet()
+        ?: emptySet()
+
+/**
  * GraphQL 批量查询构建器。
  * 单次请求合并多个仓库的最新 Release，降低 GitHub API 调用次数。
  */
@@ -63,5 +125,17 @@ object GraphQLQuery {
             "${it.toLegalId()}: repository(owner: \"${it.owner}\", name: \"${it.name}\") { ...latestRelease }"
         }
         return "{ $aliases } $FRAGMENT"
+    }
+
+    /**
+     * 批量构建各仓库两版本间提交贡献者的查询。
+     */
+    fun buildContributorsQuery(requests: List<ContributorsRequest>): String {
+        require(requests.isNotEmpty())
+        val aliases = requests.joinToString(" ") { req ->
+            val alias = req.repo.toLegalId()
+            """$alias: repository(owner: "${req.repo.owner}", name: "${req.repo.name}") { compare(headExpr: "${req.headTag}", baseExpr: "${req.baseTag}") { commits(first: 100) { nodes { commit { author { user { login name } } } } } } }"""
+        }
+        return "{ $aliases }"
     }
 }

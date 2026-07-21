@@ -10,9 +10,10 @@ import net.mamoe.mirai.utils.MiraiLogger
 import net.xchen446.mirai.grw.config.GrwSettings
 import net.xchen446.mirai.grw.config.GrwWatches
 import net.xchen446.mirai.grw.config.WatchEntry
+import net.xchen446.mirai.grw.github.ContributorsRequest
 import net.xchen446.mirai.grw.github.GitHubClient
-import net.xchen446.mirai.grw.github.RepoId
 import net.xchen446.mirai.grw.github.Release
+import net.xchen446.mirai.grw.github.RepoId
 import net.xchen446.mirai.grw.notifier.Notification
 import net.xchen446.mirai.grw.notifier.Notifier
 
@@ -54,12 +55,19 @@ class ReleaseWatcher(
         job = null
     }
 
+    private data class PendingRelease(
+        val repo: RepoId,
+        val release: Release,
+        val subscribers: Set<Long>,
+        val prevTag: String,
+    )
+
     private suspend fun tick() {
         val watches = watchesConfig.watches
         if (watches.isEmpty()) return
         logger.verbose("Starting a new request with ${watches.size} repo(s)")
 
-        val toNotify = mutableListOf<Pair<RepoId, Notification>>()
+        val pending = mutableListOf<PendingRelease>()
         val nonexistent = mutableListOf<RepoId>()
 
         for (batch in watches.keys.toList().chunked(BATCH_SIZE)) {
@@ -80,7 +88,15 @@ class ReleaseWatcher(
                     continue
                 }
                 val release = node.latestRelease ?: continue
-                handleRelease(repo, release, entry, toNotify)
+
+                val prevTag = entry.lastReleaseTag
+                entry.lastReleaseTag = release.tagName
+
+                val isNewRelease = release.tagName != prevTag && prevTag != null
+                val shouldPush = isNewRelease && (!release.isPrerelease || settings.includePrerelease)
+                if (shouldPush) {
+                    pending += PendingRelease(repo, release, entry.userSubscribers + entry.groupSubscribers, prevTag!!)
+                }
             }
         }
 
@@ -89,22 +105,18 @@ class ReleaseWatcher(
             watches.remove(repo)
         }
 
-        notifier.notify(toNotify)
-    }
+        val contributorsMap = if (pending.isNotEmpty()) {
+            val reqs = pending.map { ContributorsRequest(it.repo, it.release.tagName, it.prevTag) }
+            runCatching { client.fetchContributors(reqs) }
+                .onFailure { logger.warning("Failed to fetch contributors", it) }
+                .getOrDefault(emptyMap())
+        } else emptyMap()
 
-    private fun handleRelease(
-        repo: RepoId,
-        release: Release,
-        entry: WatchEntry,
-        toNotify: MutableList<Pair<RepoId, Notification>>,
-    ) {
-        val isNewRelease = release.tagName != entry.lastReleaseTag && entry.lastReleaseTag != null
-        val shouldPush = isNewRelease && (!release.isPrerelease || settings.includePrerelease)
-        // 始终更新基线，避免下次重复处理；预发布被过滤时也不应再次触发
-        entry.lastReleaseTag = release.tagName
-        if (shouldPush) {
-            toNotify += repo to Notification(release, entry.userSubscribers + entry.groupSubscribers)
+        val toNotify = pending.map { (repo, release, subscribers) ->
+            repo to Notification(release, subscribers, contributorsMap[repo] ?: emptySet())
         }
+
+        notifier.notify(toNotify)
     }
 
     private companion object {
