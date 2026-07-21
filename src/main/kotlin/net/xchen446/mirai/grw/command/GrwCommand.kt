@@ -2,7 +2,7 @@ package net.xchen446.mirai.grw.command
 
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.permission.hasPermission
+import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.xchen446.mirai.grw.GrwPlugin
 import net.xchen446.mirai.grw.config.GrwSettings
 
