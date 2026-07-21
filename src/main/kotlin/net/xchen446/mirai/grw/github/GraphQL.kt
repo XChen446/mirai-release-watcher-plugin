@@ -45,7 +45,7 @@ data class ReleaseNodes(
  * 单次请求合并多个仓库的最新 Release，降低 GitHub API 调用次数。
  */
 object GraphQLQuery {
-    private const val FRAGMENT = """
+    private val FRAGMENT = """
         fragment latestRelease on Repository {
             releases(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) {
                 nodes {

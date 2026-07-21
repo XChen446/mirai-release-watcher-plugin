@@ -63,10 +63,9 @@ class ReleaseWatcher(
         val nonexistent = mutableListOf<RepoId>()
 
         for (batch in watches.keys.toList().chunked(BATCH_SIZE)) {
-            val response = runCatching { client.query(batch.toSet()) }.getOrElse {
-                logger.error("GraphQL request failed", it)
-                continue
-            }
+            val response = runCatching { client.query(batch.toSet()) }
+                .onFailure { logger.error("GraphQL request failed", it) }
+                .getOrNull() ?: continue
             if (response.errors.isNotEmpty()) {
                 logger.error("GitHub returned errors: ${response.errors}")
                 continue

@@ -17,6 +17,7 @@ dependencies {
     val serialization = "1.6.3"
 
     implementation("io.ktor:ktor-client-core:$ktor")
+    implementation("io.ktor:ktor-client-auth:$ktor")
     implementation("io.ktor:ktor-client-okhttp:$ktor")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor")
