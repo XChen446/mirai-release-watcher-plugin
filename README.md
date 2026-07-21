@@ -78,7 +78,7 @@ Mirai Console 插件，定时监控 GitHub 仓库 Release 更新，发现新版�
 | `/watch remove <repo>...` | 取消监听（支持批量） |
 | `/watch list` | 查看当前监听列表 |
 
-完整命令文档见 [docs/commands.md](docs/commands.md)。
+完整命令文档见 [docs/commands.md](docs/commands.md)，权限说明见 [docs/permissions.md](docs/permissions.md)。
 
 ---
 

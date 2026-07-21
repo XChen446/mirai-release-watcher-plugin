@@ -1,5 +1,7 @@
 # 命令参考
 
+> 权限模型与推荐的细粒度控制方案见 [permissions.md](permissions.md)。
+
 ## /grw —— 全局管理命令
 
 | 子命令 | 权限 | 说明 |
