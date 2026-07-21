@@ -1,1 +1,1 @@
-rootProject.name = "release-watcher"
+rootProject.name = "mirai-release-watcher"

@@ -1,13 +1,11 @@
 plugins {
-    val kt = "1.4.31"
-
-    kotlin("jvm") version kt
-    kotlin("plugin.serialization") version kt
-    id("net.mamoe.mirai-console") version "2.6.4"
+    kotlin("jvm") version "1.9.25"
+    kotlin("plugin.serialization") version "1.9.25"
+    id("net.mamoe.mirai-console") version "2.16.0"
 }
 
-group = "net.im45.bot"
-version = "1.0.0-dev01"
+group = "net.xchen446.mirai"
+version = "2.0.0"
 
 repositories {
     maven("https://maven.aliyun.com/repository/public")
@@ -15,13 +13,16 @@ repositories {
 }
 
 dependencies {
-    val ktor = "1.5.4"
+    val ktor = "2.3.13"
+    val serialization = "1.6.3"
 
-    implementation("com.google.code.gson:gson:2.8.6")
-    implementation("io.ktor:ktor-client-auth:$ktor")
-//    implementation("io.ktor:ktor-client-cio:$ktor")
+    implementation("io.ktor:ktor-client-core:$ktor")
+    implementation("io.ktor:ktor-client-okhttp:$ktor")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktor")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization")
 }
 
-kotlin.target.compilations.all {
-    kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+kotlin {
+    jvmToolchain(17)
 }
