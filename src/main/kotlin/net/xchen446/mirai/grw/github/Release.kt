@@ -10,6 +10,7 @@ data class Release(
     @SerialName("url") val url: String,
     @SerialName("tagName") val tagName: String,
     @SerialName("name") val name: String? = null,
+    @SerialName("description") val description: String? = null,
     @SerialName("createdAt") val createdAt: String,
     @SerialName("updatedAt") val updatedAt: String,
     @SerialName("isPrerelease") val isPrerelease: Boolean = false,

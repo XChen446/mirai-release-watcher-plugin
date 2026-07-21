@@ -28,16 +28,8 @@ data class GraphQLResponse(
 )
 
 @Serializable
-data class Release(
-    @SerialName("url") val url: String,
-    @SerialName("tagName") val tagName: String,
-    @SerialName("name") val name: String? = null,
-    @SerialName("description") val description: String? = null,
-    @SerialName("createdAt") val createdAt: String,
-    @SerialName("updatedAt") val updatedAt: String,
-    @SerialName("isPrerelease") val isPrerelease: Boolean = false,
-    @SerialName("author") val author: Author? = null,
-    @SerialName("releaseAssets") val releaseAssets: AssetNodes = AssetNodes(),
+data class RepoOwner(
+    @SerialName("avatarUrl") val avatarUrl: String,
 )
 
 @Serializable

@@ -3,10 +3,9 @@ package net.xchen446.mirai.grw.notifier
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.console.util.ContactUtils.getContactOrNull
-import net.mamoe.mirai.message.data.MessageChain
+import net.mamoe.mirai.contact.Contact.Companion.uploadImage
 import net.mamoe.mirai.message.data.MessageChainBuilder
 import net.mamoe.mirai.message.data.PlainText
-import net.mamoe.mirai.utils.MiraiExperimentalApi
 import net.mamoe.mirai.utils.MiraiLogger
 import net.xchen446.mirai.grw.config.GrwSettings
 import net.xchen446.mirai.grw.github.Release
@@ -29,7 +28,7 @@ class Notifier(
     private val settings: GrwSettings,
     private val logger: MiraiLogger,
 ) {
-    @OptIn(ConsoleExperimentalApi::class, MiraiExperimentalApi::class)
+    @OptIn(ConsoleExperimentalApi::class)
     suspend fun notify(messages: List<Pair<RepoId, Notification>>) {
         if (messages.isEmpty()) return
         val botId = settings.botId
@@ -54,17 +53,18 @@ class Notifier(
                     logger.warning("Contact $sub 为空，无法推送 $repo 的通知")
                     return@forEach
                 }
-                val msg = if (avatarBytes != null) {
-                    runCatching {
-                        val image = contact.uploadImage(avatarBytes.inputStream())
-                        MessageChainBuilder().apply {
-                            add(image)
-                            add(PlainText("\n"))
-                            add(PlainText(text))
-                        }.build()
-                    }.getOrNull()
+                val image = if (avatarBytes != null) {
+                    runCatching { contact.uploadImage(avatarBytes.inputStream()) }.getOrNull()
                 } else null
-                contact.sendMessage(msg ?: text)
+                if (image != null) {
+                    contact.sendMessage(MessageChainBuilder().apply {
+                        add(image)
+                        add(PlainText("\n"))
+                        add(PlainText(text))
+                    }.build())
+                } else {
+                    contact.sendMessage(text)
+                }
             }
         }
     }
