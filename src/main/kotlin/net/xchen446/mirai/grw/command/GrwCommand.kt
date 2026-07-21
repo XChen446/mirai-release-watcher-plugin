@@ -71,7 +71,7 @@ object GrwCommand : CompositeCommand(
             return
         }
         GrwSettings.timeout = timeout
-        GrwPlugin.applyToken(GrwSettings.token)
+        GrwPlugin.rebuildClient()
         sendMessage("请求超时已设为 ${timeout}ms")
     }
 
